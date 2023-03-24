@@ -7,13 +7,17 @@ import { ReactComponent as Check } from './check.svg';
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const useSemiPersistentState = (key, initialState) => {
+  const isMounted = React.useRef(false);
   const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
   );
 
   React.useEffect(() => {
-    localStorage.setItem(key, value);
-  }, [value, key]);
+    if (!isMounted.current) {
+      isMounted.current = true;
+    } else {
+      localStorage.setItem(key, value);
+    }  }, [value, key]);
 
   return [value, setValue];
 };
