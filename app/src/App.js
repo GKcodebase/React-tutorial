@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 
-import  './App.css';
+import './App.css';
 import { ReactComponent as Check } from './check.svg';
 
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
@@ -17,7 +17,8 @@ const useSemiPersistentState = (key, initialState) => {
       isMounted.current = true;
     } else {
       localStorage.setItem(key, value);
-    }  }, [value, key]);
+    }
+  }, [value, key]);
 
   return [value, setValue];
 };
@@ -54,7 +55,12 @@ const storiesReducer = (state, action) => {
       throw new Error();
   }
 };
-
+const getSumComments = stories => {
+  return stories.data.reduce(
+    (result, value) => result + value.num_comments,
+    0
+  );
+};
 const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState(
     'search',
@@ -89,12 +95,12 @@ const App = () => {
     handleFetchStories();
   }, [handleFetchStories]);
 
-  const handleRemoveStory = item => {
+  const handleRemoveStory = React.useCallback(item => {
     dispatchStories({
       type: 'REMOVE_STORY',
       payload: item,
     });
-  };
+  }, []);
 
   const handleSearchInput = event => {
     setSearchTerm(event.target.value);
@@ -106,15 +112,22 @@ const App = () => {
     event.preventDefault();
   };
 
+  const sumComments = React.useMemo(() => getSumComments(stories), [
+    stories,
+  ]);
+
   return (
     <div className="container">
-      <h1 className="headline-primary">My Hacker Stories</h1>
+      <h1 className="headline-primary">My Hacker Stories with {sumComments} comments. </h1>
 
       <SearchForm
         searchTerm={searchTerm}
         onSearchInput={handleSearchInput}
         onSearchSubmit={handleSearchSubmit}
       />
+
+      <hr />
+
 
       {stories.isError && <p>Something went wrong ...</p>}
 
@@ -186,14 +199,14 @@ const InputWithLabel = ({
   );
 };
 
-const List = ({ list, onRemoveItem }) =>
+const List = React.memo(({ list, onRemoveItem }) =>
   list.map(item => (
     <Item
       key={item.objectID}
       item={item}
       onRemoveItem={onRemoveItem}
     />
-  ));
+  )));
 
 const Item = ({ item, onRemoveItem }) => (
   <div className="item">
